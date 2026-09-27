@@ -22,9 +22,9 @@ spec:
         - name: multitool
           image: wbitt/network-multitool
           env:
-            - name: HTTP_PORT
+            - name: HTTP
               value: "8080"
-            - name: HTTPS_PORT
+            - name: HTTPS
               value: "8443"
           ports:
             - name: multitool-http

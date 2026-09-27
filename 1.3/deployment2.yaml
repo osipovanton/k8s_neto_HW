@@ -20,7 +20,7 @@ spec:
             - -c
             - |
               until nslookup nginx-init-service.default.svc.cluster.local; do
-                echo "Waiting for nginx-init-service..."
+                echo "Waiting..."
                 sleep 2
               done
               echo "Service found."
