@@ -1,136 +1,25 @@
-# Домашнее задание 1.3 — «Запуск приложений в K8S»
+## Задание 1
 
-## Задание 1. Deployment из nginx и multitool
+1. Создание Deployment приложения из двух контейнеров
+<img width="723" height="62" alt="image" src="https://github.com/user-attachments/assets/13ad6626-afca-4b6e-ad0a-7d194cc7c58b" />
 
-Манифесты:
+2. Увеличение реплик до 2
+3.<img width="1604" height="106" alt="image" src="https://github.com/user-attachments/assets/9192c3f1-edc9-4867-93b0-180908e2704a" />
 
-- [Deployment](task1-deployment.yaml)
-- [Service](task1-service.yaml)
-- [Pod multitool-client](task1-client.yaml)
+3. Запуск svc
+<img width="1228" height="91" alt="image" src="https://github.com/user-attachments/assets/35765ec5-e48a-4f86-9b2c-edabe567d7ef" />
 
-### 1. Запуск Deployment с одной репликой
+4. Проверка через curl
+<img width="1575" height="716" alt="image" src="https://github.com/user-attachments/assets/c090c74e-e944-41b8-b327-22429bb48838" />
 
-```bash
-kubectl apply -f task1-deployment.yaml
-kubectl get pods -l app=netology-app
-```
+## Задание 2
 
-В одном Pod находятся два контейнера: `nginx` и `multitool`.
+1. Создание deployment
+   <img width="983" height="64" alt="image" src="https://github.com/user-attachments/assets/76c45f1b-6fde-4049-a65b-c1d2d34fc232" />
 
-Оба приложения по умолчанию используют HTTP-порт 80. Контейнеры внутри одного Pod используют общий network namespace, поэтому одновременно слушать один и тот же IP:port они не могут. Для `multitool` HTTP-порт изменён на `8080`, HTTPS-порт — на `8443` через переменные окружения `HTTP_PORT` и `HTTPS_PORT`.
+2. Ожидание запуска контейнера
+   <img width="1070" height="98" alt="image" src="https://github.com/user-attachments/assets/237d564b-a58f-4ccc-affb-b9d77a1de5ea" />
 
-**Для отчёта:** скриншот `kubectl get pods -l app=netology-app` с одной репликой.
+3. Создание и запуск svc. И дальнейший запуск контейнера
+   <img width="1091" height="97" alt="image" src="https://github.com/user-attachments/assets/29e3928a-9f9c-455b-8dcf-430c0649df8f" />
 
-### 2. Масштабирование до двух реплик
-
-```bash
-kubectl scale deployment netology-deployment --replicas=2
-kubectl get pods -l app=netology-app -o wide
-```
-
-**Для отчёта:** скриншот двух работающих Pod.
-
-### 3. Создание Service
-
-```bash
-kubectl apply -f task1-service.yaml
-kubectl get svc netology-service
-kubectl get endpointslice -l kubernetes.io/service-name=netology-service
-```
-
-Service публикует:
-
-- `80/TCP` → nginx;
-- `8080/TCP` → multitool.
-
-### 4. Проверка доступа из отдельного Pod
-
-```bash
-kubectl apply -f task1-client.yaml
-kubectl get pod multitool-client
-```
-
-Проверка nginx:
-
-```bash
-kubectl exec multitool-client -- curl -s http://netology-service:80
-```
-
-Проверка multitool:
-
-```bash
-kubectl exec multitool-client -- curl -s http://netology-service:8080
-```
-
-**Для отчёта:** скриншот успешных ответов обеих команд `curl`.
-
----
-
-## Задание 2. Init-контейнер и запуск nginx после появления Service
-
-Манифесты:
-
-- [Deployment](task2-deployment.yaml)
-- [Service](task2-service.yaml)
-
-Init-контейнер `busybox` проверяет DNS-имя `nginx-init-service.default.svc.cluster.local`. Пока объект Service не создан, init-контейнер не завершается и основной контейнер nginx не запускается.
-
-### 1. Сначала запускаем только Deployment
-
-```bash
-kubectl apply -f task2-deployment.yaml
-kubectl get pods -l app=nginx-init-app
-```
-
-Ожидаемое состояние Pod:
-
-```text
-Init:0/1
-```
-
-Логи init-контейнера:
-
-```bash
-kubectl logs deployment/nginx-init-deployment -c wait-for-service
-```
-
-В логах должно повторяться:
-
-```text
-Waiting for nginx-init-service...
-```
-
-**Для отчёта:** скриншот Pod в состоянии `Init:0/1` и логов init-контейнера.
-
-### 2. Создаём Service
-
-```bash
-kubectl apply -f task2-service.yaml
-kubectl get svc nginx-init-service
-kubectl get pods -l app=nginx-init-app -w
-```
-
-После обнаружения Service init-контейнер завершится, а nginx перейдёт в `Running`. После появления `1/1 Running` выйти из `-w` через `Ctrl+C`.
-
-Проверка:
-
-```bash
-kubectl get pods -l app=nginx-init-app
-kubectl logs deployment/nginx-init-deployment -c wait-for-service
-kubectl exec multitool-client -- curl -s http://nginx-init-service
-```
-
-**Для отчёта:** скриншот Pod в состоянии `1/1 Running` и успешного `curl`.
-
----
-
-## Очистка стенда после выполнения
-
-```bash
-kubectl delete -f task1-client.yaml
-kubectl delete -f task1-service.yaml
-kubectl delete deployment netology-deployment
-
-kubectl delete -f task2-service.yaml
-kubectl delete -f task2-deployment.yaml
-```
